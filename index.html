@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HARMONIC CODE ACCESS</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --neon-cyan: #00fff7;
+    --neon-magenta: #ff00c8;
+    --neon-green: #00ff88;
+    --neon-red: #ff2233;
+    --bg-color: #050510;
+  }
+
+  body {
+    background-color: var(--bg-color);
+    color: var(--neon-cyan);
+    font-family: 'Orbitron', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 4px, 3px 100%;
+  }
+
+  .terminal {
+    background: rgba(10, 10, 30, 0.95);
+    border: 3px solid var(--neon-cyan);
+    box-shadow: 0 0 20px var(--neon-cyan);
+    padding: 30px;
+    width: 350px;
+    text-align: center;
+    clip-path: polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%);
+  }
+
+  h2 { font-family: 'Press Start 2P', cursive; font-size: 12px; margin-bottom: 25px; }
+
+  #pin-display {
+    background: #000;
+    border: 1px solid var(--neon-magenta);
+    font-size: 24px;
+    padding: 15px;
+    letter-spacing: 10px;
+    margin-bottom: 20px;
+    color: var(--neon-green);
+  }
+
+  .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+  button {
+    background: transparent;
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+    padding: 15px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  button:hover { background: var(--neon-cyan); color: #000; box-shadow: 0 0 15px var(--neon-cyan); }
+
+  /* Animazione Vibrazione */
+  @keyframes shake {
+    0% { transform: translate(0, 0); }
+    25% { transform: translate(-8px, 4px); }
+    50% { transform: translate(8px, -4px); }
+    75% { transform: translate(-8px, -4px); }
+    100% { transform: translate(0, 0); }
+  }
+
+  .shake-effect { animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) 2; border-color: var(--neon-red) !important; }
+
+  /* Messaggio Finale Ottimizzato */
+  #secret-message {
+    display: none;
+    background: rgba(0, 255, 136, 0.1);
+    border: 4px double var(--neon-green);
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+    max-width: 80%;
+  }
+
+  .unlock-text {
+    font-family: 'Press Start 2P', cursive;
+    font-size: 18px;
+    line-height: 1.8;
+    color: #fff;
+    text-shadow: 0 0 10px var(--neon-green), 0 0 20px var(--neon-green);
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+
+  <div class="terminal" id="main-ui">
+    <div style="font-size: 10px; margin-bottom: 10px; color: var(--neon-magenta)" id="tries">TRIES: 3</div>
+    <h2>SECURE ACCESS</h2>
+    <div id="pin-display">____</div>
+    <div class="keypad">
+      <button onclick="press('1')">1</button><button onclick="press('2')">2</button><button onclick="press('3')">3</button>
+      <button onclick="press('4')">4</button><button onclick="press('5')">5</button><button onclick="press('6')">6</button>
+      <button onclick="press('7')">7</button><button onclick="press('8')">8</button><button onclick="press('9')">9</button>
+      <button style="color:var(--neon-red)" onclick="clearPin()">CLR</button>
+      <button onclick="press('0')">0</button>
+      <button onclick="verify()">[ EXEC ]</button>
+    </div>
+  </div>
+
+  <div id="secret-message">
+    <div class="unlock-text">
+      ✓ ACCESS GRANTED<br><br>
+      PRIMA PARTE<br>
+      <span style="color: var(--neon-green)">HARMONIC CODE</span><br>
+      SBLOCCATA
+    </div>
+  </div>
+
+  <script>
+    const SECRET_PIN = "2357";
+    let currentInput = "";
+    let attempts = 3;
+
+    // AUDIO ENGINE (Web Audio API)
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playTone(freq, type, duration, vol) {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + duration);
+    }
+
+    function soundBeep() { playTone(800, 'sine', 0.1, 0.1); }
+    function soundError() { 
+      playTone(150, 'sawtooth', 0.5, 0.2); 
+      playTone(110, 'sawtooth', 0.5, 0.2); 
+    }
+    function soundSuccess() {
+      playTone(523.25, 'sine', 0.2, 0.1);
+      setTimeout(() => playTone(659.25, 'sine', 0.2, 0.1), 100);
+      setTimeout(() => playTone(783.99, 'sine', 0.4, 0.1), 200);
+    }
+
+    // LOGICA
+    function press(n) {
+      if(currentInput.length < 4) {
+        soundBeep();
+        currentInput += n;
+        document.getElementById('pin-display').textContent = currentInput.padEnd(4, "_");
+      }
+    }
+
+    function clearPin() { soundBeep(); currentInput = ""; document.getElementById('pin-display').textContent = "____"; }
+
+    function verify() {
+      const ui = document.getElementById('main-ui');
+      if(currentInput === SECRET_PIN) {
+        soundSuccess();
+        ui.style.display = 'none';
+        document.getElementById('secret-message').style.display = 'block';
+      } else {
+        attempts--;
+        soundError();
+        ui.classList.remove('shake-effect');
+        void ui.offsetWidth;
+        ui.classList.add('shake-effect');
+        currentInput = "";
+        document.getElementById('pin-display').textContent = "____";
+        document.getElementById('tries').textContent = `TRIES: ${attempts}`;
+        if(attempts <= 0) {
+          document.body.innerHTML = "<h1 style='color:red; font-family:\"Press Start 2P\"'>TERMINAL LOCKED</h1>";
+        }
+      }
+    }
+  </script>
+</body>
+</html>
